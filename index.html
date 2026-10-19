@@ -1,0 +1,2024 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-tema="claro">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <title>Calculadora de Férias</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    // Aplica o tema salvo antes de desenhar a interface.
+    (() => {
+      try {
+        const temaSalvo = localStorage.getItem("calculadoraFeriasTema");
+        document.documentElement.dataset.tema =
+          temaSalvo === "escuro" ? "escuro" : "claro";
+      } catch (e) {
+        document.documentElement.dataset.tema = "claro";
+      }
+    })();
+  </script>
+
+  <style>
+    :root {
+      color-scheme: light;
+      --fundo:#f1f5f3;
+      --texto:#19332b;
+      --suave:#708079;
+      --borda:#dfe8e3;
+      --verde:#087f5b;
+      --azul:#087e8b;
+      --roxo:#7950a1;
+      --vermelho:#b42318;
+      --vermelho-fundo:#fff0ef;
+      --vermelho-borda:#f0aaa5;
+      --painel:#ffffff;
+      --cartao:#ffffff;
+      --campo:#ffffff;
+      --campo-texto:#19332b;
+      --campo-borda:#cbd9d1;
+      --superficie-suave:#f5f8f6;
+      --superficie-resumo:#fbfdfb;
+      --superficie-botao:#f2f7f4;
+      --texto-secundario:#65776d;
+      --texto-rotulo:#344d43;
+      --calendario:#ffffff;
+      --calendario-texto:#294238;
+      --calendario-hover:#edf5ef;
+      --calendario-navegacao:#edf3ef;
+      --calendario-navegacao-texto:#294b3b;
+      --atalho-fundo:#f7faf8;
+      --atalho-texto:#52685d;
+      --direcao-texto:#4c6257;
+      --modal-borda:#dce8e1;
+      --modal-instrucao:#64766c;
+      --modal-ajuda:#75857c;
+      --exportacao-fundo:#f8fbf9;
+      --exportacao-texto:#213d30;
+      --sombra:rgba(24,56,43,.07);
+      --sombra-cartao:rgba(24,56,43,.045);
+      --barra-fundo:#e7eee9;
+    }
+
+    html[data-tema="escuro"] {
+      color-scheme: dark;
+      --fundo:#101512;
+      --texto:#e3ece6;
+      --suave:#a0b0a6;
+      --borda:#303d35;
+      --verde:#35bd8a;
+      --azul:#45c2ce;
+      --roxo:#b694e0;
+      --vermelho:#ff827a;
+      --vermelho-fundo:#351f20;
+      --vermelho-borda:#854541;
+      --painel:#1a211d;
+      --cartao:#202923;
+      --campo:#151b17;
+      --campo-texto:#e3ece6;
+      --campo-borda:#435348;
+      --superficie-suave:#252f29;
+      --superficie-resumo:#202923;
+      --superficie-botao:#29362e;
+      --texto-secundario:#b0beb5;
+      --texto-rotulo:#c8d7cd;
+      --calendario:#1b241e;
+      --calendario-texto:#dce8df;
+      --calendario-hover:#304137;
+      --calendario-navegacao:#2b3930;
+      --calendario-navegacao-texto:#e0eee4;
+      --atalho-fundo:#29362e;
+      --atalho-texto:#c6d6cb;
+      --direcao-texto:#c0d0c5;
+      --modal-borda:#35453a;
+      --modal-instrucao:#bac8bf;
+      --modal-ajuda:#a6b6ab;
+      --exportacao-fundo:#151c17;
+      --exportacao-texto:#e0ebe3;
+      --sombra:rgba(0,0,0,.25);
+      --sombra-cartao:rgba(0,0,0,.16);
+      --barra-fundo:#303b33;
+    }
+
+    * { box-sizing:border-box; }
+
+    html,body {
+      margin:0;
+      width:100%;
+      height:100%;
+      overflow:hidden;
+    }
+
+    body {
+      background:var(--fundo);
+      color:var(--texto);
+      font-family:"Roboto Condensed",sans-serif;
+      font-size:16px;
+      transition:background .25s ease,color .25s ease;
+    }
+
+    button,input,textarea { font:inherit; }
+    button { cursor:pointer; }
+
+    button:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible {
+      outline:2px solid var(--verde);
+      outline-offset:2px;
+    }
+
+    .app {
+      width:100%;
+      height:100vh;
+      height:100dvh;
+      padding:clamp(8px,1.5vh,18px) clamp(10px,2vw,28px) 8px;
+      display:flex;
+      flex-direction:column;
+      gap:clamp(8px,1.2vh,14px);
+      overflow:hidden;
+    }
+
+    .cabecalho {
+      flex:0 0 auto;
+      padding:clamp(12px,2vh,22px) clamp(17px,2vw,28px);
+      color:white;
+      border-radius:16px;
+      background:linear-gradient(125deg,#075b43,#0b9067);
+      box-shadow:0 8px 24px var(--sombra);
+    }
+
+    .cabecalho-conteudo {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+    }
+
+    .cabecalho-textos { min-width:0; }
+
+    .cabecalho h1 {
+      margin:0 0 5px;
+      font-size:clamp(23px,2.4vw,34px);
+      line-height:1.1;
+    }
+
+    .cabecalho p {
+      margin:0;
+      color:#e0f5eb;
+      font-size:clamp(13px,1.2vw,16px);
+    }
+
+    .botao-tema {
+      flex:0 0 auto;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      min-height:42px;
+      padding:9px 13px;
+      border:1px solid rgba(255,255,255,.35);
+      border-radius:11px;
+      color:#fff;
+      background:rgba(255,255,255,.12);
+      font-size:14px;
+      font-weight:700;
+      white-space:nowrap;
+      transition:background .2s ease,transform .2s ease;
+    }
+
+    .botao-tema:hover {
+      background:rgba(255,255,255,.23);
+      transform:translateY(-1px);
+    }
+
+    .tema-icone {
+      width:19px;
+      height:19px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:19px;
+      line-height:1;
+    }
+
+    .painel-principal {
+      flex:1 1 auto;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+      padding:clamp(10px,1.5vw,22px);
+      background:var(--painel);
+      border:1px solid var(--borda);
+      border-radius:18px;
+      box-shadow:0 10px 30px var(--sombra);
+      overflow:visible;
+      position:relative;
+      transition:background .25s ease,border-color .25s ease;
+    }
+
+    .titulo-secao {
+      flex:0 0 auto;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:5px 12px;
+      margin-bottom:clamp(8px,1.5vh,18px);
+    }
+
+    .titulo-secao h2 {
+      margin:0;
+      font-size:clamp(19px,1.8vw,24px);
+    }
+
+    .aviso {
+      color:var(--suave);
+      font-size:clamp(11px,1vw,14px);
+    }
+
+    .aviso-sobreposicao {
+      flex:0 0 auto;
+      margin:0 0 10px;
+      padding:12px 14px;
+      border:1px solid var(--vermelho-borda);
+      border-left:5px solid var(--vermelho);
+      border-radius:10px;
+      color:var(--vermelho);
+      background:var(--vermelho-fundo);
+      font-size:14px;
+      line-height:1.45;
+      white-space:pre-line;
+    }
+
+    .aviso-sobreposicao[hidden] { display:none !important; }
+
+    .area-etapas {
+      flex:1 1 auto;
+      min-height:0;
+      position:relative;
+      overflow:visible;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .periodos-grid {
+      width:100%;
+      display:grid;
+      grid-template-columns:repeat(var(--etapa,1),minmax(0,1fr));
+      align-items:center;
+      justify-content:center;
+      gap:clamp(8px,1.3vw,18px);
+      transition:gap .4s ease;
+    }
+
+    .periodo {
+      min-width:0;
+      position:relative;
+      border:1px solid var(--borda);
+      border-radius:15px;
+      background:var(--cartao);
+      box-shadow:0 5px 17px var(--sombra-cartao);
+      animation:aparecer .5s ease both;
+      transition:background .25s ease,border-color .25s ease;
+    }
+
+    .periodo[hidden] { display:none !important; }
+
+    .periodo.sobreposicao {
+      border:2px solid var(--vermelho);
+      background:var(--vermelho-fundo);
+      box-shadow:0 0 0 3px rgba(180,35,24,.09);
+    }
+
+    .periodo.sobreposicao .periodo-topo {
+      background:#a52a22 !important;
+    }
+
+    @keyframes aparecer {
+      from { opacity:0; transform:translateX(65px); }
+      to { opacity:1; transform:translateX(0); }
+    }
+
+    .periodo-topo {
+      padding:clamp(10px,1.5vh,17px) clamp(10px,1.2vw,18px);
+      color:white;
+      border-radius:14px 14px 0 0;
+    }
+
+    .periodo-1 .periodo-topo { background:#087f5b; }
+    .periodo-2 .periodo-topo { background:#087e8b; }
+    .periodo-3 .periodo-topo { background:#7950a1; }
+
+    html[data-tema="escuro"] .periodo-1 .periodo-topo {
+      background:#087a59;
+    }
+
+    html[data-tema="escuro"] .periodo-2 .periodo-topo {
+      background:#08737d;
+    }
+
+    html[data-tema="escuro"] .periodo-3 .periodo-topo {
+      background:#68458b;
+    }
+
+    .periodo-topo-linha {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:6px;
+    }
+
+    .periodo-topo h3 {
+      margin:0;
+      font-size:clamp(17px,1.6vw,22px);
+    }
+
+    .numero-periodo {
+      width:30px;
+      height:30px;
+      flex:0 0 30px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      color:white;
+      background:rgba(255,255,255,.2);
+      border-radius:50%;
+      font-weight:700;
+    }
+
+    .periodo-topo p {
+      margin:5px 0 0;
+      color:rgba(255,255,255,.9);
+      font-size:clamp(11px,1vw,14px);
+    }
+
+    .periodo-corpo { padding:clamp(10px,1.2vw,18px); }
+
+    .campo { margin-bottom:clamp(10px,1.4vh,18px); }
+
+    .campo label,.rotulo {
+      display:block;
+      margin-bottom:7px;
+      color:var(--texto-rotulo);
+      font-size:clamp(12px,1.1vw,15px);
+      font-weight:700;
+    }
+
+    .quantidade-linha {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-width:0;
+    }
+
+    .quantidade-input {
+      flex:1 1 auto;
+      width:0;
+      min-width:0;
+      height:44px;
+      padding:7px 8px;
+      border:1px solid var(--campo-borda);
+      border-radius:11px;
+      outline:none;
+      color:var(--campo-texto);
+      background:var(--campo);
+      font-size:21px;
+      font-weight:700;
+      text-align:center;
+      transition:border-color .2s,box-shadow .2s,background .2s;
+      appearance:textfield;
+      -moz-appearance:textfield;
+    }
+
+    .quantidade-input::-webkit-inner-spin-button,
+    .quantidade-input::-webkit-outer-spin-button {
+      -webkit-appearance:none;
+      margin:0;
+    }
+
+    .quantidade-input:focus {
+      border-color:var(--verde);
+      box-shadow:0 0 0 3px rgba(8,127,91,.12);
+    }
+
+    .periodo-2 .quantidade-input:focus {
+      border-color:var(--azul);
+    }
+
+    .stepper-botao {
+      width:42px;
+      height:42px;
+      flex:0 0 42px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:0;
+      border:1px solid var(--borda);
+      border-radius:12px;
+      background:var(--superficie-botao);
+      color:var(--texto);
+      box-shadow:0 2px 4px rgba(25,51,43,.04);
+      transition:transform .16s ease,background .16s ease,color .16s ease,border-color .16s ease,box-shadow .16s ease;
+    }
+
+    .stepper-botao svg {
+      width:22px;
+      height:22px;
+      display:block;
+      stroke:currentColor;
+      stroke-width:2.4;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+      fill:none;
+    }
+
+    .stepper-botao:hover:not(:disabled) {
+      background:#e0f2e8;
+      border-color:#9bcdb5;
+      color:#056b49;
+      box-shadow:0 4px 10px rgba(8,127,91,.12);
+      transform:translateY(-1px);
+    }
+
+    .stepper-botao:active:not(:disabled) { transform:scale(.94); }
+
+    .stepper-botao:focus-visible {
+      outline:3px solid rgba(8,127,91,.24);
+      outline-offset:2px;
+    }
+
+    .stepper-botao:disabled {
+      cursor:not-allowed;
+      opacity:.38;
+      box-shadow:none;
+    }
+
+    .periodo-2 .stepper-botao {
+      color:var(--azul);
+      background:var(--superficie-botao);
+      border-color:var(--borda);
+    }
+
+    .periodo-2 .stepper-botao:hover:not(:disabled) {
+      color:#075e68;
+      background:#dcf2f3;
+      border-color:#9bd3d7;
+      box-shadow:0 4px 10px rgba(8,126,139,.12);
+    }
+
+    html[data-tema="escuro"] .stepper-botao:hover:not(:disabled),
+    html[data-tema="escuro"] .periodo-2 .stepper-botao:hover:not(:disabled) {
+      color:#eafff1;
+      background:#304d3c;
+      border-color:#4f8668;
+    }
+
+    .unidade {
+      white-space:nowrap;
+      color:var(--suave);
+    }
+
+    .quantidade-automatica {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+      padding:10px;
+      border-radius:9px;
+      background:#f3edf8;
+      color:#5f3c83;
+      font-size:13px;
+    }
+
+    .quantidade-automatica strong { font-size:24px; }
+
+    html[data-tema="escuro"] .quantidade-automatica {
+      background:#352b41;
+      color:#d7baf5;
+    }
+
+    .data-botao {
+      width:100%;
+      min-height:42px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      padding:9px 11px;
+      border:1px solid var(--campo-borda);
+      border-radius:9px;
+      background:var(--campo);
+      color:var(--texto);
+      text-align:left;
+      font-weight:600;
+    }
+
+    .data-botao:hover {
+      border-color:var(--verde);
+    }
+
+    .data-valor { overflow-wrap:anywhere; }
+    .icone-calendario { flex:0 0 auto; font-size:19px; }
+
+    .calendario {
+      position:fixed !important;
+      z-index:99999 !important;
+      width:min(310px,calc(100vw - 16px));
+      max-width:calc(100vw - 16px);
+      padding:clamp(6px,1vw,12px);
+      border:1px solid var(--borda);
+      border-radius:12px;
+      background:var(--calendario);
+      color:var(--texto);
+      box-shadow:0 12px 35px rgba(0,0,0,.25);
+      overflow:hidden;
+      visibility:visible;
+    }
+
+    .calendario[hidden] { display:none !important; }
+    .calendario.periodo-cal-1 { --cor-calendario:#087f5b; }
+    .calendario.periodo-cal-2 { --cor-calendario:#087e8b; }
+    .calendario.periodo-cal-3 { --cor-calendario:#7950a1; }
+
+    html[data-tema="escuro"] .calendario.periodo-cal-1 {
+      --cor-calendario:#168d67;
+    }
+
+    html[data-tema="escuro"] .calendario.periodo-cal-2 {
+      --cor-calendario:#148d98;
+    }
+
+    html[data-tema="escuro"] .calendario.periodo-cal-3 {
+      --cor-calendario:#8862b1;
+    }
+
+    .calendario-cabecalho {
+      display:grid;
+      grid-template-columns:32px minmax(0,1fr) 32px;
+      gap:5px;
+      align-items:center;
+      margin-bottom:8px;
+    }
+
+    .mes-titulo {
+      text-align:center;
+      font-size:clamp(12px,1vw,15px);
+      font-weight:700;
+      text-transform:capitalize;
+      white-space:nowrap;
+    }
+
+    .navegar-mes {
+      width:32px;
+      height:32px;
+      border:0;
+      border-radius:8px;
+      background:var(--calendario-navegacao);
+      color:var(--calendario-navegacao-texto);
+      font-size:21px;
+    }
+
+    .navegar-mes:hover { filter:brightness(.94); }
+
+    .dias-semana,.dias-grid {
+      display:grid;
+      grid-template-columns:repeat(7,minmax(0,1fr));
+      gap:2px;
+    }
+
+    .dia-semana {
+      padding:3px 0;
+      text-align:center;
+      color:var(--suave);
+      font-size:11px;
+      font-weight:700;
+    }
+
+    .dia {
+      min-width:0;
+      height:var(--altura-dia,29px);
+      padding:0;
+      border:0;
+      border-radius:6px;
+      background:var(--calendario);
+      color:var(--calendario-texto);
+      font-size:clamp(10px,1vw,14px);
+    }
+
+    .dia:hover { background:var(--calendario-hover); }
+    .dia.vazio { pointer-events:none; }
+
+    .calendario .dia.selecionado {
+      color:white;
+      background:var(--cor-calendario,var(--verde));
+      font-weight:700;
+    }
+
+    .dia.hoje { outline:1px solid #8eaa99; outline-offset:-2px; }
+
+    .atalhos-data {
+      display:flex;
+      flex-wrap:wrap;
+      gap:5px;
+      margin-top:8px;
+    }
+
+    .atalho {
+      padding:6px 8px;
+      border:1px solid var(--borda);
+      border-radius:7px;
+      color:var(--atalho-texto);
+      background:var(--atalho-fundo);
+      font-size:12px;
+    }
+
+    .atalho:hover { border-color:var(--verde); }
+
+    .direcao-opcoes {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:6px;
+    }
+
+    .direcao-botao {
+      min-width:0;
+      min-height:39px;
+      padding:7px 5px;
+      border:1px solid var(--borda);
+      border-radius:9px;
+      color:var(--direcao-texto);
+      background:var(--campo);
+      font-size:clamp(11px,1vw,14px);
+      font-weight:600;
+    }
+
+    .periodo-1 .direcao-botao.ativo {
+      color:#066746;
+      background:#e5f5ed;
+      border-color:#087f5b;
+    }
+
+    .periodo-2 .direcao-botao.ativo {
+      color:#076b75;
+      background:#e3f5f6;
+      border-color:#087e8b;
+    }
+
+    .periodo-3 .direcao-botao.ativo {
+      color:#68428c;
+      background:#f1e9f8;
+      border-color:#7950a1;
+    }
+
+    html[data-tema="escuro"] .periodo-1 .direcao-botao.ativo {
+      color:#9af0c7;
+      background:#203d30;
+      border-color:#35bd8a;
+    }
+
+    html[data-tema="escuro"] .periodo-2 .direcao-botao.ativo {
+      color:#9cecf0;
+      background:#203b3d;
+      border-color:#45c2ce;
+    }
+
+    html[data-tema="escuro"] .periodo-3 .direcao-botao.ativo {
+      color:#e0c5ff;
+      background:#352944;
+      border-color:#b694e0;
+    }
+
+    .resultado {
+      margin-top:9px;
+      padding:11px;
+      border-radius:10px;
+      background:var(--superficie-suave);
+    }
+
+    .resultado-titulo {
+      margin-bottom:5px;
+      color:var(--suave);
+      font-size:11px;
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:.4px;
+    }
+
+    .resultado-datas {
+      font-size:clamp(15px,1.45vw,21px);
+      font-weight:700;
+      line-height:1.3;
+      overflow-wrap:anywhere;
+    }
+
+    .resultado-detalhe {
+      margin-top:5px;
+      color:var(--texto-secundario);
+      font-size:12px;
+      line-height:1.35;
+    }
+
+    .mensagem-erro {
+      display:none;
+      margin-top:7px;
+      padding:8px 9px;
+      border-radius:8px;
+      color:var(--vermelho);
+      background:var(--vermelho-fundo);
+      font-size:12px;
+      line-height:1.4;
+      font-weight:600;
+    }
+
+    .mensagem-erro.visivel { display:block; }
+
+    .resumo {
+      flex:0 0 auto;
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:10px;
+      margin-top:clamp(8px,1.4vh,18px);
+    }
+
+    .resumo-item {
+      min-width:0;
+      padding:clamp(8px,1vw,14px);
+      border:1px solid var(--borda);
+      border-radius:11px;
+      background:var(--superficie-resumo);
+    }
+
+    .resumo-item span {
+      display:block;
+      color:var(--suave);
+      font-size:clamp(11px,1vw,14px);
+    }
+
+    .resumo-item strong {
+      display:block;
+      margin-top:4px;
+      font-size:clamp(18px,2vw,27px);
+      line-height:1.1;
+      overflow-wrap:anywhere;
+    }
+
+    .resumo-item.bloqueado {
+      border-color:var(--vermelho-borda);
+      background:var(--vermelho-fundo);
+    }
+
+    .resumo-item.bloqueado strong,
+    .resumo-item.bloqueado span { color:var(--vermelho); }
+
+    .barra-fundo {
+      flex:0 0 auto;
+      height:7px;
+      overflow:hidden;
+      margin-top:9px;
+      border-radius:10px;
+      background:var(--barra-fundo);
+    }
+
+    .barra-progresso {
+      width:0;
+      height:100%;
+      border-radius:inherit;
+      background:linear-gradient(90deg,#087f5b,#20b486);
+      transition:width .3s ease;
+    }
+
+    .barra-progresso.bloqueada { background:var(--vermelho); }
+
+    .acoes-texto {
+      flex:0 0 auto;
+      display:flex;
+      justify-content:flex-end;
+      margin-top:10px;
+    }
+
+    .botao-texto {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      min-height:39px;
+      padding:8px 14px;
+      border:1px solid #b8d9c8;
+      border-radius:10px;
+      color:#076746;
+      background:#eaf7ef;
+      font-weight:700;
+      transition:background .2s,transform .2s,box-shadow .2s;
+    }
+
+    .botao-texto:hover {
+      background:#d9f0e3;
+      box-shadow:0 4px 12px rgba(8,127,91,.12);
+      transform:translateY(-1px);
+    }
+
+    .botao-texto svg {
+      width:18px;
+      height:18px;
+      stroke:currentColor;
+      stroke-width:2;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+      fill:none;
+    }
+
+    html[data-tema="escuro"] .botao-texto {
+      border-color:#38634b;
+      color:#9af0c7;
+      background:#22392b;
+    }
+
+    html[data-tema="escuro"] .botao-texto:hover {
+      background:#2a4936;
+    }
+
+    .modal-fundo {
+      position:fixed;
+      inset:0;
+      z-index:100000;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      background:rgba(13,34,26,.55);
+      backdrop-filter:blur(4px);
+    }
+
+    .modal-fundo[hidden] { display:none !important; }
+
+    .modal-texto {
+      width:min(760px,100%);
+      max-height:min(90vh,760px);
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+      border:1px solid var(--modal-borda);
+      border-radius:18px;
+      background:var(--painel);
+      color:var(--texto);
+      box-shadow:0 22px 70px rgba(0,0,0,.25);
+      animation:modalEntrada .22s ease both;
+    }
+
+    @keyframes modalEntrada {
+      from { opacity:0; transform:translateY(12px) scale(.99); }
+      to { opacity:1; transform:translateY(0) scale(1); }
+    }
+
+    .modal-cabecalho {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:18px 20px;
+      color:white;
+      background:linear-gradient(125deg,#075b43,#0b9067);
+    }
+
+    .modal-cabecalho h2 {
+      margin:0;
+      font-size:clamp(19px,2vw,24px);
+    }
+
+    .modal-cabecalho p {
+      margin:5px 0 0;
+      color:#e0f5eb;
+      font-size:13px;
+    }
+
+    .fechar-modal {
+      width:36px;
+      height:36px;
+      flex:0 0 36px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:0;
+      border:1px solid rgba(255,255,255,.35);
+      border-radius:10px;
+      color:white;
+      background:rgba(255,255,255,.13);
+      font-size:25px;
+      line-height:1;
+    }
+
+    .fechar-modal:hover { background:rgba(255,255,255,.24); }
+
+    .modal-conteudo {
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      padding:18px 20px 20px;
+    }
+
+    .modal-instrucao {
+      margin:0;
+      color:var(--modal-instrucao);
+      font-size:14px;
+      line-height:1.45;
+    }
+
+    .texto-exportacao {
+      width:100%;
+      min-height:220px;
+      height:clamp(220px,38vh,390px);
+      resize:vertical;
+      padding:14px;
+      border:1px solid var(--campo-borda);
+      border-radius:11px;
+      outline:none;
+      background:var(--exportacao-fundo);
+      color:var(--exportacao-texto);
+      font-family:"Roboto Condensed",sans-serif;
+      font-size:15px;
+      line-height:1.65;
+      white-space:pre-wrap;
+    }
+
+    .texto-exportacao:focus {
+      border-color:var(--verde);
+      box-shadow:0 0 0 3px rgba(8,127,91,.12);
+    }
+
+    .modal-acoes {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+
+    .modal-ajuda {
+      color:var(--modal-ajuda);
+      font-size:12px;
+    }
+
+    .modal-botoes {
+      display:flex;
+      gap:8px;
+      margin-left:auto;
+    }
+
+    .botao-secundario,.botao-copiar {
+      min-height:42px;
+      padding:9px 15px;
+      border-radius:10px;
+      font-weight:700;
+    }
+
+    .botao-secundario {
+      border:1px solid var(--borda);
+      color:var(--texto);
+      background:var(--campo);
+    }
+
+    .botao-secundario:hover { background:var(--superficie-suave); }
+
+    .botao-copiar {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      border:1px solid #087f5b;
+      color:white;
+      background:#087f5b;
+      box-shadow:0 3px 8px rgba(8,127,91,.15);
+    }
+
+    .botao-copiar:hover { background:#066b4c; }
+
+    .botao-copiar:disabled,
+    .botao-secundario:disabled {
+      opacity:.45;
+      cursor:not-allowed;
+    }
+
+    .botao-copiar svg {
+      width:18px;
+      height:18px;
+      stroke:currentColor;
+      stroke-width:2;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+      fill:none;
+    }
+
+    .status-copia {
+      min-height:18px;
+      color:var(--verde);
+      font-size:13px;
+      font-weight:600;
+    }
+
+    .rodape {
+      flex:0 0 auto;
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:space-between;
+      gap:5px 10px;
+      padding:2px 4px;
+      color:var(--suave);
+      font-size:clamp(10px,1vw,13px);
+    }
+
+    .rodape strong {
+      color:var(--verde);
+      letter-spacing:.4px;
+    }
+
+    @media (max-height:700px) and (min-width:651px) {
+      .app { gap:7px; padding-top:7px; padding-bottom:5px; }
+      .cabecalho { padding:9px 20px; }
+      .painel-principal { padding:10px; }
+      .titulo-secao { margin-bottom:7px; }
+      .campo { margin-bottom:8px; }
+      .periodo-topo { padding:9px 11px; }
+      .periodo-corpo { padding:9px; }
+      .resultado { padding:8px; }
+      .resumo { margin-top:7px; }
+      .stepper-botao { width:36px; height:38px; flex-basis:36px; }
+      .stepper-botao svg { width:20px; height:20px; }
+      .quantidade-linha { gap:5px; }
+      .quantidade-input { height:40px; }
+      .acoes-texto { margin-top:6px; }
+      .botao-texto { min-height:34px; padding:6px 11px; }
+    }
+
+    @media (max-width:900px) {
+      .periodos-grid { gap:7px; }
+      .periodo-topo h3 { font-size:17px; }
+      .periodo-topo p { font-size:11px; }
+      .periodo-corpo { padding:9px; }
+      .numero-periodo { width:25px; height:25px; flex-basis:25px; }
+      .resultado-datas { font-size:15px; }
+      .resumo-item { padding:8px; }
+      .stepper-botao { width:36px; height:38px; flex-basis:36px; }
+      .stepper-botao svg { width:20px; height:20px; }
+      .quantidade-linha { gap:5px; }
+    }
+
+    @media (max-width:650px) {
+      .app { padding:8px; gap:8px; }
+      .cabecalho { padding:12px 13px; }
+      .cabecalho-conteudo { gap:8px; }
+      .cabecalho h1 { font-size:22px; }
+      .cabecalho p { font-size:12px; }
+      .botao-tema { min-height:38px; padding:7px 9px; gap:5px; font-size:12px; }
+      .tema-icone { font-size:17px; width:17px; height:17px; }
+      .painel-principal { padding:10px; }
+      .titulo-secao h2 { font-size:19px; }
+      .aviso { font-size:11px; }
+      .area-etapas { overflow:visible; align-items:center; }
+      .periodos-grid { grid-template-columns:minmax(0,1fr); max-width:430px; margin:auto; }
+      .periodo-topo { padding:10px 13px; }
+      .periodo-corpo { padding:11px; }
+      .campo { margin-bottom:10px; }
+      .resumo { gap:5px; }
+      .resumo-item span { font-size:10px; }
+      .resumo-item strong { font-size:17px; }
+      .rodape { font-size:10px; }
+      .stepper-botao { width:42px; height:42px; flex-basis:42px; }
+      .stepper-botao svg { width:22px; height:22px; }
+      .quantidade-linha { gap:8px; }
+      .acoes-texto { margin-top:7px; }
+      .botao-texto { width:100%; }
+      .modal-fundo { padding:10px; }
+      .modal-texto { max-height:94vh; border-radius:14px; }
+      .modal-cabecalho { padding:14px; }
+      .modal-conteudo { padding:14px; }
+      .texto-exportacao { min-height:180px; height:34vh; }
+      .modal-acoes { align-items:flex-start; flex-direction:column; }
+      .modal-botoes { width:100%; margin-left:0; }
+      .modal-botoes button { flex:1; }
+      .aviso-sobreposicao { font-size:12px; padding:9px; }
+    }
+
+    @media (max-width:380px) {
+      .cabecalho h1 { font-size:19px; }
+      .cabecalho p { font-size:11px; }
+      .botao-tema { padding:7px; font-size:11px; }
+    }
+
+    @media (prefers-reduced-motion:reduce) {
+      *,*::before,*::after {
+        animation-duration:.01ms !important;
+        transition-duration:.01ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <header class="cabecalho">
+      <div class="cabecalho-conteudo">
+        <div class="cabecalho-textos">
+          <h1>CALCULADORA DE FÉRIAS</h1>
+          <p>Organize seus 30 dias de férias em até três períodos.</p>
+        </div>
+        <button class="botao-tema" id="alternarTema" type="button"
+          aria-label="Ativar tema escuro" aria-pressed="false"
+          title="Alternar entre tema claro e escuro">
+          <span class="tema-icone" id="temaIcone" aria-hidden="true">☾</span>
+          <span id="temaTexto">Modo escuro</span>
+        </button>
+      </div>
+    </header>
+
+    <section class="painel-principal">
+      <div class="titulo-secao">
+        <h2>Distribuição das férias</h2>
+        <span class="aviso">Contagem inclusiva: a data escolhida é o primeiro dia.</span>
+      </div>
+
+      <div class="aviso-sobreposicao" id="avisoSobreposicao" hidden role="alert" aria-live="assertive"></div>
+
+      <div class="area-etapas">
+        <div class="periodos-grid" id="periodosGrid" style="--etapa:1">
+
+          <article class="periodo periodo-1" id="cartao1">
+            <div class="periodo-topo">
+              <div class="periodo-topo-linha"><h3>1º período</h3><span class="numero-periodo">01</span></div>
+              <p>Defina a quantidade inicial de dias.</p>
+            </div>
+            <div class="periodo-corpo">
+              <div class="campo">
+                <label for="quantidade1">Quantidade de dias</label>
+                <div class="quantidade-linha">
+                  <button class="stepper-botao" id="diminuir1" type="button" aria-label="Diminuir um dia no primeiro período" title="Diminuir um dia"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+                  <input class="quantidade-input" id="quantidade1" type="number" min="1" max="30" value="10" inputmode="numeric">
+                  <button class="stepper-botao" id="aumentar1" type="button" aria-label="Aumentar um dia no primeiro período" title="Aumentar um dia"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+                  <span class="unidade">dias</span>
+                </div>
+              </div>
+              <div class="campo">
+                <span class="rotulo">Data de referência</span>
+                <button class="data-botao" id="botaoData1" type="button" aria-expanded="false"><span class="data-valor" id="dataValor1">Selecione uma data</span><span class="icone-calendario">▦</span></button>
+                <div class="calendario" id="calendario1" hidden>
+                  <div class="calendario-cabecalho"><button class="navegar-mes" id="anterior1" type="button" aria-label="Mês anterior">‹</button><div class="mes-titulo" id="mesTitulo1"></div><button class="navegar-mes" id="proximo1" type="button" aria-label="Próximo mês">›</button></div>
+                  <div class="dias-semana"><span class="dia-semana">D</span><span class="dia-semana">S</span><span class="dia-semana">T</span><span class="dia-semana">Q</span><span class="dia-semana">Q</span><span class="dia-semana">S</span><span class="dia-semana">S</span></div>
+                  <div class="dias-grid" id="diasGrid1"></div>
+                  <div class="atalhos-data"><button class="atalho" id="hoje1" type="button">Hoje</button><button class="atalho" id="fechar1" type="button">Fechar calendário</button></div>
+                </div>
+              </div>
+              <div class="campo">
+                <span class="rotulo">Direção da contagem</span>
+                <div class="direcao-opcoes"><button class="direcao-botao ativo" id="tras1" type="button" aria-pressed="true">← Para trás</button><button class="direcao-botao" id="frente1" type="button" aria-pressed="false">Para frente →</button></div>
+              </div>
+              <div class="resultado"><div class="resultado-titulo">Período calculado</div><div class="resultado-datas" id="datasResultado1">—</div><div class="resultado-detalhe" id="detalheResultado1">Escolha uma data de referência.</div></div>
+              <div class="mensagem-erro" id="erro1"></div>
+            </div>
+          </article>
+
+          <article class="periodo periodo-2" id="cartao2" hidden>
+            <div class="periodo-topo">
+              <div class="periodo-topo-linha"><h3>2º período</h3><span class="numero-periodo">02</span></div>
+              <p>Distribua parte dos dias restantes.</p>
+            </div>
+            <div class="periodo-corpo">
+              <div class="campo">
+                <label for="quantidade2">Quantidade de dias</label>
+                <div class="quantidade-linha">
+                  <button class="stepper-botao" id="diminuir2" type="button" aria-label="Diminuir um dia no segundo período" title="Diminuir um dia"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+                  <input class="quantidade-input" id="quantidade2" type="number" min="1" max="29" placeholder="Dias" inputmode="numeric">
+                  <button class="stepper-botao" id="aumentar2" type="button" aria-label="Aumentar um dia no segundo período" title="Aumentar um dia"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+                  <span class="unidade">dias</span>
+                </div>
+              </div>
+              <div class="campo">
+                <span class="rotulo">Data de referência</span>
+                <button class="data-botao" id="botaoData2" type="button" aria-expanded="false"><span class="data-valor" id="dataValor2">Selecione uma data</span><span class="icone-calendario">▦</span></button>
+                <div class="calendario" id="calendario2" hidden>
+                  <div class="calendario-cabecalho"><button class="navegar-mes" id="anterior2" type="button" aria-label="Mês anterior">‹</button><div class="mes-titulo" id="mesTitulo2"></div><button class="navegar-mes" id="proximo2" type="button" aria-label="Próximo mês">›</button></div>
+                  <div class="dias-semana"><span class="dia-semana">D</span><span class="dia-semana">S</span><span class="dia-semana">T</span><span class="dia-semana">Q</span><span class="dia-semana">Q</span><span class="dia-semana">S</span><span class="dia-semana">S</span></div>
+                  <div class="dias-grid" id="diasGrid2"></div>
+                  <div class="atalhos-data"><button class="atalho" id="hoje2" type="button">Hoje</button><button class="atalho" id="fechar2" type="button">Fechar calendário</button></div>
+                </div>
+              </div>
+              <div class="campo">
+                <span class="rotulo">Direção da contagem</span>
+                <div class="direcao-opcoes"><button class="direcao-botao ativo" id="tras2" type="button" aria-pressed="true">← Para trás</button><button class="direcao-botao" id="frente2" type="button" aria-pressed="false">Para frente →</button></div>
+              </div>
+              <div class="resultado"><div class="resultado-titulo">Período calculado</div><div class="resultado-datas" id="datasResultado2">—</div><div class="resultado-detalhe" id="detalheResultado2">Informe a quantidade de dias.</div></div>
+              <div class="mensagem-erro" id="erro2"></div>
+            </div>
+          </article>
+
+          <article class="periodo periodo-3" id="cartao3" hidden>
+            <div class="periodo-topo">
+              <div class="periodo-topo-linha"><h3>3º período</h3><span class="numero-periodo">03</span></div>
+              <p>Os dias restantes são calculados automaticamente.</p>
+            </div>
+            <div class="periodo-corpo">
+              <div class="campo"><span class="rotulo">Quantidade de dias restantes</span><div class="quantidade-automatica"><span>Saldo para o 3º período</span><strong id="quantidade3">0 dias</strong></div></div>
+              <div class="campo">
+                <span class="rotulo">Data de referência</span>
+                <button class="data-botao" id="botaoData3" type="button" aria-expanded="false"><span class="data-valor" id="dataValor3">Selecione uma data</span><span class="icone-calendario">▦</span></button>
+                <div class="calendario" id="calendario3" hidden>
+                  <div class="calendario-cabecalho"><button class="navegar-mes" id="anterior3" type="button" aria-label="Mês anterior">‹</button><div class="mes-titulo" id="mesTitulo3"></div><button class="navegar-mes" id="proximo3" type="button" aria-label="Próximo mês">›</button></div>
+                  <div class="dias-semana"><span class="dia-semana">D</span><span class="dia-semana">S</span><span class="dia-semana">T</span><span class="dia-semana">Q</span><span class="dia-semana">Q</span><span class="dia-semana">S</span><span class="dia-semana">S</span></div>
+                  <div class="dias-grid" id="diasGrid3"></div>
+                  <div class="atalhos-data"><button class="atalho" id="hoje3" type="button">Hoje</button><button class="atalho" id="fechar3" type="button">Fechar calendário</button></div>
+                </div>
+              </div>
+              <div class="campo">
+                <span class="rotulo">Direção da contagem</span>
+                <div class="direcao-opcoes"><button class="direcao-botao ativo" id="tras3" type="button" aria-pressed="true">← Para trás</button><button class="direcao-botao" id="frente3" type="button" aria-pressed="false">Para frente →</button></div>
+              </div>
+              <div class="resultado"><div class="resultado-titulo">Período calculado</div><div class="resultado-datas" id="datasResultado3">—</div><div class="resultado-detalhe" id="detalheResultado3">Escolha uma data de referência.</div></div>
+              <div class="mensagem-erro" id="erro3"></div>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <section class="resumo" aria-label="Resumo da distribuição">
+        <div class="resumo-item" id="resumoItem1"><span>Dias distribuídos com data definida</span><strong id="totalDistribuido">0 de 30</strong></div>
+        <div class="resumo-item" id="resumoItem2"><span>Saldo ainda não definido</span><strong id="saldoDisponivel">30 dias</strong></div>
+        <div class="resumo-item" id="resumoItem3"><span>Percentual definido</span><strong id="percentualDistribuido">0%</strong></div>
+      </section>
+
+      <div class="barra-fundo"><div class="barra-progresso" id="barraProgresso"></div></div>
+      <div class="acoes-texto">
+        <button class="botao-texto" id="abrirTexto" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>
+          Ver texto completo dos períodos
+        </button>
+      </div>
+    </section>
+
+    <footer class="rodape"><span>CALCULADORA DE FÉRIAS · Contagem inclusiva de dias corridos</span><strong>powered by MODESTO</strong></footer>
+  </main>
+
+  <section class="modal-fundo" id="modalTexto" hidden role="dialog" aria-modal="true" aria-labelledby="tituloModal">
+    <div class="modal-texto">
+      <header class="modal-cabecalho">
+        <div><h2 id="tituloModal">Resumo das férias</h2><p>Texto simples, pronto para copiar e colar.</p></div>
+        <button class="fechar-modal" id="fecharModal" type="button" aria-label="Fechar janela">×</button>
+      </header>
+      <div class="modal-conteudo">
+        <p class="modal-instrucao">Confira as informações abaixo. Você pode selecionar e copiar o texto manualmente ou usar o botão ao lado da caixa.</p>
+        <textarea class="texto-exportacao" id="textoExportacao" readonly spellcheck="false" aria-label="Texto das férias previstas"></textarea>
+        <div class="modal-acoes">
+          <span class="modal-ajuda">O conteúdo acompanha os cálculos atuais.</span>
+          <div class="modal-botoes">
+            <button class="botao-secundario" id="selecionarTexto" type="button">Selecionar texto</button>
+            <button class="botao-copiar" id="copiarTexto" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg>
+              Copiar tudo
+            </button>
+          </div>
+        </div>
+        <div class="status-copia" id="statusCopia" role="status" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const TOTAL = 30;
+      const MS_DIA = 24 * 60 * 60 * 1000;
+      const meses = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+      const mesesAbrev = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+      const diasSemanaAbrev = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+      const el = id => document.getElementById(id);
+
+      // Tema claro/escuro
+      function aplicarTema(tema, salvar = true) {
+        const temaFinal = tema === "escuro" ? "escuro" : "claro";
+        document.documentElement.dataset.tema = temaFinal;
+
+        const escuro = temaFinal === "escuro";
+        el("temaIcone").textContent = escuro ? "☀" : "☾";
+        el("temaTexto").textContent = escuro ? "Modo claro" : "Modo escuro";
+        el("alternarTema").setAttribute("aria-pressed",String(escuro));
+        el("alternarTema").setAttribute(
+          "aria-label",
+          escuro ? "Ativar tema claro" : "Ativar tema escuro"
+        );
+        el("alternarTema").title = escuro
+          ? "Mudar para o tema claro"
+          : "Mudar para o tema escuro";
+
+        if (salvar) {
+          try {
+            localStorage.setItem("calculadoraFeriasTema",temaFinal);
+          } catch (e) {
+            // O tema continua funcionando mesmo se o navegador bloquear o armazenamento.
+          }
+        }
+      }
+
+      el("alternarTema").addEventListener("click",() => {
+        const temaAtual = document.documentElement.dataset.tema;
+        aplicarTema(temaAtual === "escuro" ? "claro" : "escuro");
+      });
+
+      function hojeLocal() {
+        const d = new Date();
+        return new Date(d.getFullYear(),d.getMonth(),d.getDate(),12);
+      }
+
+      function copiarData(d) {
+        return new Date(d.getFullYear(),d.getMonth(),d.getDate(),12);
+      }
+
+      function iso(d) {
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+      }
+
+      function formatar(d) {
+        return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
+      }
+
+      function formatarCurta(d) {
+        return `${d.getDate()}-${mesesAbrev[d.getMonth()]}-${d.getFullYear()} (${diasSemanaAbrev[d.getDay()]})`;
+      }
+
+      function formatarLonga(d) {
+        return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"long",year:"numeric"});
+      }
+
+      function somarDias(d,n) {
+        const r = copiarData(d);
+        r.setDate(r.getDate()+n);
+        return r;
+      }
+
+      const hoje = hojeLocal();
+      const estado = {};
+      let etapaAtual = 1;
+      let calendarioAberto = 0;
+
+      [1,2,3].forEach(n => {
+        estado[n] = {
+          data:null,
+          direcao:"tras",
+          mes:new Date(hoje.getFullYear(),hoje.getMonth(),1,12)
+        };
+        const calendario = el("calendario"+n);
+        calendario.classList.add("periodo-cal-"+n);
+        document.body.appendChild(calendario);
+      });
+
+      function q1() {
+        return Number.parseInt(el("quantidade1").value,10) || 0;
+      }
+
+      function q2() {
+        return Number.parseInt(el("quantidade2").value,10) || 0;
+      }
+
+      function valido1() {
+        return Number.isInteger(q1()) && q1()>=1 && q1()<=TOTAL;
+      }
+
+      function valido2() {
+        return valido1() && Number.isInteger(q2()) && q2()>=1 && q2()<=TOTAL-q1();
+      }
+
+      function mostrarErro(n,mensagem) {
+        el("erro"+n).textContent = mensagem || "";
+        el("erro"+n).classList.toggle("visivel",Boolean(mensagem));
+      }
+
+      function fecharCalendarios() {
+        [1,2,3].forEach(n => {
+          el("calendario"+n).hidden = true;
+          el("botaoData"+n).setAttribute("aria-expanded","false");
+        });
+        calendarioAberto = 0;
+      }
+
+      function posicionarCalendario(n) {
+        const cal = el("calendario"+n);
+        if (cal.hidden) return;
+
+        const r = el("botaoData"+n).getBoundingClientRect();
+        const margem = 8;
+        const largura = Math.min(310,window.innerWidth-margem*2);
+        cal.style.width = largura+"px";
+        cal.style.maxWidth = `calc(100vw - ${margem*2}px)`;
+        cal.style.left = margem+"px";
+        cal.style.top = margem+"px";
+        cal.style.setProperty("--altura-dia","29px");
+
+        let altura = cal.getBoundingClientRect().height;
+        const alturaDisponivel = Math.max(160,window.innerHeight-margem*2);
+        const acima = r.top-margem;
+        const abaixo = window.innerHeight-r.bottom-margem;
+        let top;
+
+        if (abaixo>=altura) {
+          top = r.bottom+5;
+        } else if (acima>=altura) {
+          top = r.top-altura-5;
+        } else {
+          const espaco = Math.max(160,Math.min(alturaDisponivel,Math.max(acima,abaixo)));
+          const alturaFixa = altura-6*29;
+          const alturaDia = Math.max(16,Math.min(29,Math.floor((espaco-alturaFixa)/6)));
+          cal.style.setProperty("--altura-dia",alturaDia+"px");
+          altura = cal.getBoundingClientRect().height;
+          top = Math.max(margem,Math.min(r.bottom+5,window.innerHeight-altura-margem));
+        }
+
+        top = Math.max(margem,Math.min(top,window.innerHeight-altura-margem));
+        let left = r.left;
+        left = Math.max(margem,Math.min(left,window.innerWidth-largura-margem));
+        cal.style.left = left+"px";
+        cal.style.top = top+"px";
+      }
+
+      function abrirCalendario(n) {
+        const estavaFechado = el("calendario"+n).hidden;
+        fecharCalendarios();
+
+        if (estavaFechado) {
+          const cal = el("calendario"+n);
+          cal.hidden = false;
+          el("botaoData"+n).setAttribute("aria-expanded","true");
+          calendarioAberto = n;
+          renderizarCalendario(n);
+          posicionarCalendario(n);
+        }
+      }
+
+      function mudarMes(n,passo) {
+        const m = estado[n].mes;
+        estado[n].mes = new Date(m.getFullYear(),m.getMonth()+passo,1,12);
+        renderizarCalendario(n);
+        posicionarCalendario(n);
+      }
+
+      function renderizarCalendario(n) {
+        const s = estado[n];
+        const ano = s.mes.getFullYear();
+        const mes = s.mes.getMonth();
+
+        el("mesTitulo"+n).textContent = `${meses[mes]} de ${ano}`;
+
+        const inicio = new Date(ano,mes,1,12).getDay();
+        const totalDias = new Date(ano,mes+1,0,12).getDate();
+        const grade = el("diasGrid"+n);
+        grade.replaceChildren();
+
+        for (let i=0;i<inicio;i++) {
+          const vazio = document.createElement("span");
+          vazio.className = "dia vazio";
+          vazio.setAttribute("aria-hidden","true");
+          grade.appendChild(vazio);
+        }
+
+        for (let dia=1;dia<=totalDias;dia++) {
+          const data = new Date(ano,mes,dia,12);
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "dia";
+          b.textContent = String(dia);
+          b.setAttribute("aria-label",formatarLonga(data));
+
+          if (s.data && iso(data)===iso(s.data)) {
+            b.classList.add("selecionado");
+            b.setAttribute("aria-pressed","true");
+          } else {
+            b.setAttribute("aria-pressed","false");
+          }
+
+          if (iso(data)===iso(hoje)) b.classList.add("hoje");
+          b.addEventListener("click",() => selecionarData(n,data));
+          grade.appendChild(b);
+        }
+      }
+
+      function selecionarData(n,data) {
+        estado[n].data = copiarData(data);
+        estado[n].mes = new Date(data.getFullYear(),data.getMonth(),1,12);
+        el("dataValor"+n).textContent = formatar(data);
+        fecharCalendarios();
+        atualizarResultados();
+      }
+
+      function definirDirecao(n,direcao) {
+        estado[n].direcao = direcao;
+
+        ["tras","frente"].forEach(op => {
+          const b = el(op+n);
+          const ativo = op===direcao;
+          b.classList.toggle("ativo",ativo);
+          b.setAttribute("aria-pressed",String(ativo));
+        });
+
+        atualizarResultados();
+      }
+
+      function calcular(n,quantidade) {
+        const referencia = estado[n].data;
+        if (!referencia) return null;
+
+        const deslocamento = quantidade-1;
+        const sinal = estado[n].direcao==="frente" ? 1 : -1;
+        const outra = somarDias(referencia,deslocamento*sinal);
+
+        return {
+          inicio:referencia<outra ? referencia : outra,
+          fim:referencia>outra ? referencia : outra,
+          referencia
+        };
+      }
+
+      function mostrarResultado(n,quantidade,valido) {
+        const datas = el("datasResultado"+n);
+        const detalhe = el("detalheResultado"+n);
+
+        if (!valido) {
+          datas.textContent = "—";
+          detalhe.textContent = n===2
+            ? "Informe a quantidade de dias."
+            : "Escolha uma data de referência.";
+          return;
+        }
+
+        if (!estado[n].data) {
+          datas.textContent = "—";
+          detalhe.textContent = "Selecione uma data de referência para calcular este período.";
+          return;
+        }
+
+        const r = calcular(n,quantidade);
+        datas.textContent = `${formatarCurta(r.inicio)}  a  ${formatarCurta(r.fim)}`;
+        detalhe.textContent = `${quantidade} dia(s) corridos, contando ${estado[n].direcao==="frente" ? "para frente" : "para trás"} a partir de ${formatar(r.referencia)}.`;
+      }
+
+      function animarEntrada(n) {
+        const card = el("cartao"+n);
+        card.style.animation = "none";
+        void card.offsetWidth;
+        card.style.animation = "";
+      }
+
+      function atualizarEtapa(novaEtapa) {
+        if (novaEtapa===etapaAtual) return;
+
+        etapaAtual = novaEtapa;
+        el("periodosGrid").style.setProperty("--etapa",String(etapaAtual));
+
+        [1,2,3].forEach(n => {
+          const card = el("cartao"+n);
+          const visivel = n<=etapaAtual;
+          const eraOculto = card.hidden;
+          card.hidden = !visivel;
+
+          if (visivel && eraOculto) animarEntrada(n);
+          if (!visivel && calendarioAberto===n) fecharCalendarios();
+        });
+
+        if (novaEtapa>1) animarEntrada(novaEtapa);
+      }
+
+      function ajustarQuantidade(n,passo) {
+        const campo = el("quantidade"+n);
+        let atual = Number.parseInt(campo.value,10);
+        const minimo = 1;
+        const maximo = n===1 ? TOTAL : Math.max(1,TOTAL-q1());
+
+        if (!Number.isFinite(atual)) atual = passo>0 ? 0 : 2;
+
+        const novo = Math.min(maximo,Math.max(minimo,atual+passo));
+        campo.value = String(novo);
+        atualizarResultados();
+      }
+
+      function atualizarBotoesQuantidade() {
+        const primeiro = q1();
+        const primeiroValido = valido1();
+        const campo2 = el("quantidade2");
+        const segundo = q2();
+        const limite2 = TOTAL-primeiro;
+
+        el("diminuir1").disabled = !primeiroValido || primeiro<=1;
+        el("aumentar1").disabled = !primeiroValido || primeiro>=TOTAL;
+        campo2.max = String(Math.max(1,limite2));
+        el("diminuir2").disabled = !primeiroValido || limite2<1 || campo2.value==="" || segundo<=1;
+        el("aumentar2").disabled = !primeiroValido || limite2<1 || (campo2.value!=="" && segundo>=limite2);
+      }
+
+      function detectarSobreposicoes(periodos) {
+        const conflitos = [];
+
+        for (let i=0;i<periodos.length;i++) {
+          for (let j=i+1;j<periodos.length;j++) {
+            const a = periodos[i];
+            const b = periodos[j];
+
+            const inicioComum = a.resultado.inicio>b.resultado.inicio
+              ? a.resultado.inicio : b.resultado.inicio;
+            const fimComum = a.resultado.fim<b.resultado.fim
+              ? a.resultado.fim : b.resultado.fim;
+
+            if (inicioComum<=fimComum) {
+              const diasEmComum = Math.round((fimComum-inicioComum)/MS_DIA)+1;
+
+              conflitos.push({
+                a:a.numero,
+                b:b.numero,
+                inicio:copiarData(inicioComum),
+                fim:copiarData(fimComum),
+                dias:diasEmComum
+              });
+            }
+          }
+        }
+
+        return conflitos;
+      }
+
+      function obterPeriodosValidos() {
+        const periodos = [];
+        const primeiro = q1();
+
+        if (valido1() && estado[1].data) {
+          periodos.push({
+            numero:1,
+            quantidade:primeiro,
+            resultado:calcular(1,primeiro)
+          });
+        }
+
+        const segundo = q2();
+
+        if (valido2() && estado[2].data) {
+          periodos.push({
+            numero:2,
+            quantidade:segundo,
+            resultado:calcular(2,segundo)
+          });
+        }
+
+        if (valido2()) {
+          const terceiro = TOTAL-primeiro-segundo;
+
+          if (terceiro>0 && estado[3].data) {
+            periodos.push({
+              numero:3,
+              quantidade:terceiro,
+              resultado:calcular(3,terceiro)
+            });
+          }
+        }
+
+        return periodos;
+      }
+
+      function atualizarResultados() {
+        const primeiro = q1();
+        const primeiroValido = valido1();
+        const errosQuantidade = {1:"",2:"",3:""};
+
+        if (primeiro>30) errosQuantidade[1] = "O máximo permitido é 30 dias.";
+        else if (primeiro<1) errosQuantidade[1] = "Informe entre 1 e 30 dias.";
+
+        const etapa2 = primeiroValido && primeiro<TOTAL;
+        const segundo = q2();
+        const segundoValido = valido2();
+        const etapa3 = etapa2 && segundoValido && primeiro+segundo<TOTAL;
+
+        atualizarEtapa(etapa3 ? 3 : etapa2 ? 2 : 1);
+
+        if (etapa2) {
+          const limite = TOTAL-primeiro;
+          el("quantidade2").max = String(limite);
+
+          if (segundo>limite) {
+            errosQuantidade[2] = `O máximo neste período é ${limite} dias.`;
+          } else if (el("quantidade2").value!=="" && segundo<1) {
+            errosQuantidade[2] = "Informe pelo menos 1 dia.";
+          }
+        }
+
+        const terceiro = etapa3 ? TOTAL-primeiro-segundo : 0;
+        el("quantidade3").textContent = `${terceiro} ${terceiro===1 ? "dia" : "dias"}`;
+
+        mostrarResultado(1,primeiro,primeiroValido);
+        mostrarResultado(2,segundo,etapa2 && segundoValido);
+        mostrarResultado(3,terceiro,etapa3);
+
+        const periodos = obterPeriodosValidos();
+        const conflitos = detectarSobreposicoes(periodos);
+        const periodosEmConflito = new Set();
+        const mensagensConflito = {1:[],2:[],3:[]};
+        const mensagensGerais = [];
+
+        conflitos.forEach(c => {
+          periodosEmConflito.add(c.a);
+          periodosEmConflito.add(c.b);
+
+          const intervaloComum = `${formatarCurta(c.inicio)}  a  ${formatarCurta(c.fim)}`;
+
+          mensagensConflito[c.a].push(
+            `SOBREPOSIÇÃO: conflito com o ${c.b}º período. ${c.dias} ${c.dias===1 ? "dia em comum" : "dias em comum"} (${intervaloComum}).`
+          );
+
+          mensagensConflito[c.b].push(
+            `SOBREPOSIÇÃO: conflito com o ${c.a}º período. ${c.dias} ${c.dias===1 ? "dia em comum" : "dias em comum"} (${intervaloComum}).`
+          );
+
+          mensagensGerais.push(
+            `${c.a}º e ${c.b}º períodos: ${c.dias} ${c.dias===1 ? "dia em comum" : "dias em comum"} (${intervaloComum}).`
+          );
+        });
+
+        [1,2,3].forEach(n => {
+          const cartao = el("cartao"+n);
+          const emConflito = periodosEmConflito.has(n);
+          cartao.classList.toggle("sobreposicao",emConflito);
+          cartao.setAttribute("aria-invalid",String(emConflito));
+
+          mostrarErro(
+            n,
+            [errosQuantidade[n],...mensagensConflito[n]].filter(Boolean).join(" ")
+          );
+        });
+
+        const aviso = el("avisoSobreposicao");
+
+        if (conflitos.length) {
+          aviso.textContent =
+            "ATENÇÃO: FORAM IDENTIFICADOS PERÍODOS SOBREPOSTOS.\n" +
+            mensagensGerais.join("\n") +
+            "\nA exportação está bloqueada. Altere as datas ou a direção da contagem até eliminar todos os conflitos.";
+
+          aviso.hidden = false;
+        } else {
+          aviso.textContent = "";
+          aviso.hidden = true;
+        }
+
+        const bloqueado = conflitos.length>0;
+
+        [1,2,3].forEach(n => {
+          el("resumoItem"+n).classList.toggle("bloqueado",bloqueado);
+        });
+
+        const barra = el("barraProgresso");
+        barra.classList.toggle("bloqueada",bloqueado);
+
+        if (bloqueado) {
+          el("totalDistribuido").textContent = "BLOQUEADO";
+          el("saldoDisponivel").textContent = "—";
+          el("percentualDistribuido").textContent = "—";
+          barra.style.width = "0%";
+        } else {
+          const distribuido = periodos.reduce((s,p) => s+p.quantidade,0);
+          const saldo = TOTAL-distribuido;
+          const percentual = Math.round(distribuido/TOTAL*100);
+
+          el("totalDistribuido").textContent = `${distribuido} de ${TOTAL}`;
+          el("saldoDisponivel").textContent = `${saldo} ${saldo===1 ? "dia" : "dias"}`;
+          el("percentualDistribuido").textContent = `${percentual}%`;
+          barra.style.width = `${percentual}%`;
+        }
+
+        [1,2,3].forEach(n => {
+          el("dataValor"+n).textContent =
+            estado[n].data ? formatar(estado[n].data) : "Selecione uma data";
+        });
+
+        atualizarBotoesQuantidade();
+
+        if (calendarioAberto) posicionarCalendario(calendarioAberto);
+        if (!el("modalTexto").hidden) atualizarTextoExportacao();
+      }
+
+      function datasNecessariasAusentes() {
+        if (!valido1() || !estado[1].data) return true;
+
+        if (valido1() && q1()<TOTAL) {
+          if (el("quantidade2").value!=="" && !valido2()) return true;
+
+          if (valido2()) {
+            if (!estado[2].data) return true;
+            if (TOTAL-q1()-q2()>0 && !estado[3].data) return true;
+          }
+        }
+
+        return false;
+      }
+
+      function atualizarTextoExportacao() {
+        const periodos = obterPeriodosValidos();
+        const conflitos = detectarSobreposicoes(periodos);
+        const linhas = ["FÉRIAS PREVISTAS",""];
+
+        if (conflitos.length) {
+          linhas.push("EXPORTAÇÃO BLOQUEADA — EXISTEM PERÍODOS SOBREPOSTOS.","");
+
+          conflitos.forEach(c => {
+            linhas.push(
+              `${c.a}º e ${c.b}º períodos se sobrepõem em ${c.dias} ${c.dias===1 ? "dia" : "dias"}: ${formatarCurta(c.inicio)} a ${formatarCurta(c.fim)}.`
+            );
+          });
+
+          linhas.push("","Corrija as datas antes de gerar o texto definitivo.");
+          el("textoExportacao").value = linhas.join("\n");
+          el("copiarTexto").disabled = true;
+          el("selecionarTexto").disabled = true;
+          el("statusCopia").textContent = "A exportação está bloqueada até que as sobreposições sejam corrigidas.";
+          return;
+        }
+
+        if (datasNecessariasAusentes()) {
+          linhas.push("EXPORTAÇÃO AINDA NÃO DISPONÍVEL.","");
+          linhas.push("Selecione as datas de referência dos períodos que deseja incluir.");
+
+          if (!estado[1].data) linhas.push("• Falta selecionar a data do 1º período.");
+          if (valido2() && !estado[2].data) linhas.push("• Falta selecionar a data do 2º período.");
+          if (valido2() && TOTAL-q1()-q2()>0 && !estado[3].data) {
+            linhas.push("• Falta selecionar a data do 3º período.");
+          }
+
+          el("textoExportacao").value = linhas.join("\n");
+          el("copiarTexto").disabled = true;
+          el("selecionarTexto").disabled = true;
+          el("statusCopia").textContent = "Complete as datas necessárias antes de copiar.";
+          return;
+        }
+
+        el("copiarTexto").disabled = false;
+        el("selecionarTexto").disabled = false;
+
+        if (!periodos.length) {
+          linhas.push("Informe uma quantidade válida de dias no primeiro período.");
+        } else {
+          periodos.forEach((p,indice) => {
+            const r = p.resultado;
+
+            linhas.push(`${p.numero}º PERÍODO`);
+            linhas.push(`Período: ${formatarCurta(r.inicio)} a ${formatarCurta(r.fim)}`);
+            linhas.push(`Quantidade: ${p.quantidade} ${p.quantidade===1 ? "dia" : "dias"}`);
+
+            if (indice<periodos.length-1) linhas.push("");
+          });
+
+          const total = periodos.reduce((s,p) => s+p.quantidade,0);
+          linhas.push("==");
+          linhas.push(`Total: ${total} ${total===1 ? "dia" : "dias"}`);
+
+          if (total<TOTAL) {
+            linhas.push(`Saldo sem distribuição definida: ${TOTAL-total} dias.`);
+          }
+        }
+
+        el("textoExportacao").value = linhas.join("\n");
+        el("statusCopia").textContent = "";
+      }
+
+      function abrirModalTexto() {
+        atualizarTextoExportacao();
+        el("modalTexto").hidden = false;
+        el("fecharModal").focus();
+      }
+
+      function fecharModalTexto() {
+        el("modalTexto").hidden = true;
+        el("abrirTexto").focus();
+      }
+
+      async function copiarTextoExportacao() {
+        const campo = el("textoExportacao");
+        const texto = campo.value;
+
+        if (datasNecessariasAusentes()) {
+          el("statusCopia").textContent = "Cópia bloqueada: selecione as datas necessárias.";
+          return;
+        }
+
+        if (detectarSobreposicoes(obterPeriodosValidos()).length) {
+          el("statusCopia").textContent = "Cópia bloqueada: corrija as sobreposições entre os períodos.";
+          return;
+        }
+
+        try {
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(texto);
+          } else {
+            campo.focus();
+            campo.select();
+            const copiou = document.execCommand("copy");
+
+            if (!copiou) throw new Error("Não foi possível copiar automaticamente.");
+          }
+
+          el("statusCopia").textContent = "Texto copiado para a área de transferência!";
+        } catch (erro) {
+          campo.focus();
+          campo.select();
+          el("statusCopia").textContent =
+            "A cópia automática não foi autorizada. O texto está selecionado: pressione Ctrl+C.";
+        }
+      }
+
+      [1,2,3].forEach(n => {
+        el("botaoData"+n).addEventListener("click",() => abrirCalendario(n));
+        el("anterior"+n).addEventListener("click",() => mudarMes(n,-1));
+        el("proximo"+n).addEventListener("click",() => mudarMes(n,1));
+        el("hoje"+n).addEventListener("click",() => selecionarData(n,hoje));
+        el("fechar"+n).addEventListener("click",fecharCalendarios);
+        el("tras"+n).addEventListener("click",() => definirDirecao(n,"tras"));
+        el("frente"+n).addEventListener("click",() => definirDirecao(n,"frente"));
+      });
+
+      [1,2].forEach(n => {
+        el("diminuir"+n).addEventListener("click",() => ajustarQuantidade(n,-1));
+        el("aumentar"+n).addEventListener("click",() => ajustarQuantidade(n,1));
+      });
+
+      el("quantidade1").addEventListener("input",atualizarResultados);
+
+      el("quantidade1").addEventListener("change",() => {
+        const v = Number.parseInt(el("quantidade1").value,10);
+        if (Number.isFinite(v)) {
+          el("quantidade1").value = String(Math.min(30,Math.max(1,v)));
+        }
+        atualizarResultados();
+      });
+
+      el("quantidade2").addEventListener("input",atualizarResultados);
+
+      el("quantidade2").addEventListener("change",() => {
+        const limite = TOTAL-q1();
+        const v = Number.parseInt(el("quantidade2").value,10);
+
+        if (Number.isFinite(v) && limite>=1) {
+          el("quantidade2").value = String(Math.min(limite,Math.max(1,v)));
+        }
+
+        atualizarResultados();
+      });
+
+      el("abrirTexto").addEventListener("click",abrirModalTexto);
+      el("fecharModal").addEventListener("click",fecharModalTexto);
+
+      el("selecionarTexto").addEventListener("click",() => {
+        if (datasNecessariasAusentes() || detectarSobreposicoes(obterPeriodosValidos()).length) {
+          el("statusCopia").textContent =
+            "Complete as datas necessárias e corrija eventuais sobreposições antes de selecionar o texto.";
+          return;
+        }
+
+        el("textoExportacao").focus();
+        el("textoExportacao").select();
+        el("statusCopia").textContent = "Texto selecionado. Pressione Ctrl+C para copiar.";
+      });
+
+      el("copiarTexto").addEventListener("click",copiarTextoExportacao);
+
+      el("modalTexto").addEventListener("click",e => {
+        if (e.target===el("modalTexto")) fecharModalTexto();
+      });
+
+      window.addEventListener("resize",() => {
+        if (calendarioAberto) posicionarCalendario(calendarioAberto);
+      });
+
+      document.addEventListener("keydown",e => {
+        if (e.key==="Escape") {
+          if (!el("modalTexto").hidden) fecharModalTexto();
+          else fecharCalendarios();
+        }
+      });
+
+      document.addEventListener("click",e => {
+        if (!calendarioAberto) return;
+
+        const n = calendarioAberto;
+
+        if (!el("calendario"+n).contains(e.target) &&
+            !el("botaoData"+n).contains(e.target)) {
+          fecharCalendarios();
+        }
+      });
+
+      // Inicialização: nenhuma data é selecionada automaticamente.
+      [1,2,3].forEach(n => {
+        el("dataValor"+n).textContent = "Selecione uma data";
+        renderizarCalendario(n);
+      });
+
+      aplicarTema(document.documentElement.dataset.tema || "claro",false);
+      atualizarResultados();
+    })();
+  </script>
+</body>
+</html>
